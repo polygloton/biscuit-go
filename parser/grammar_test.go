@@ -86,7 +86,7 @@ func TestGrammarPredicate(t *testing.T) {
 			},
 		},
 		{
-			Input: `right($1, [hex:41414141, "sym"])`,
+			Input: `right($1, {hex:41414141, "sym"})`,
 			Expected: &Predicate{
 				Name: sptr("right"),
 				IDs: []*Term{
@@ -143,7 +143,7 @@ func TestGrammarExpression(t *testing.T) {
 		Expected *biscuit.Expression
 	}{
 		{
-			Input: `$0 == 1`,
+			Input: `$0 === 1`,
 			Expected: &biscuit.Expression{
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.Value{Term: biscuit.Integer(1)},
@@ -190,24 +190,24 @@ func TestGrammarExpression(t *testing.T) {
 			},
 		},
 		{
-			Input: `[1, 2, 3].contains($0)`,
+			Input: `{1, 2, 3}.contains($0)`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.Integer(1), biscuit.Integer(2), biscuit.Integer(3)}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Integer(1), biscuit.Integer(2), biscuit.Integer(3))},
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.BinaryContains,
 			},
 		},
 		{
-			Input: `![4,5,6].contains($0)`,
+			Input: `!{4,5,6}.contains($0)`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.Integer(4), biscuit.Integer(5), biscuit.Integer(6)}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Integer(4), biscuit.Integer(5), biscuit.Integer(6))},
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.BinaryContains,
 				biscuit.UnaryNegate,
 			},
 		},
 		{
-			Input: `$0 == "abc"`,
+			Input: `$0 === "abc"`,
 			Expected: &biscuit.Expression{
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.Value{Term: biscuit.String("abc")},
@@ -239,18 +239,27 @@ func TestGrammarExpression(t *testing.T) {
 			},
 		},
 		{
-			Input: `["abc", "def"].contains($0)`,
+			Input: `{"abc", "def"}.contains($0)`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.String("abc"), biscuit.String("def")}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.String("abc"), biscuit.String("def"))},
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.BinaryContains,
 			},
 		},
 		{
-			Input: `!["abc", "def"].contains($0)`,
+			Input: `!{"abc", "def"}.contains($0)`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.String("abc"), biscuit.String("def")}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.String("abc"), biscuit.String("def"))},
 				biscuit.Value{Term: biscuit.Variable("0")},
+				biscuit.BinaryContains,
+				biscuit.UnaryNegate,
+			},
+		},
+		{
+			Input: `!{,}.contains(42)`,
+			Expected: &biscuit.Expression{
+				biscuit.Value{Term: biscuit.NewSet()},
+				biscuit.Value{Term: biscuit.Integer(42)},
 				biscuit.BinaryContains,
 				biscuit.UnaryNegate,
 			},
@@ -272,31 +281,31 @@ func TestGrammarExpression(t *testing.T) {
 			},
 		},
 		{
-			Input: `[hex:41, hex:42, hex:43].contains($0)`,
+			Input: `{hex:41, hex:42, hex:43}.contains($0)`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.Bytes([]byte("A")),
-					biscuit.Bytes([]byte("B")), biscuit.Bytes([]byte("C"))}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Bytes([]byte("A")),
+					biscuit.Bytes([]byte("B")), biscuit.Bytes([]byte("C")))},
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.BinaryContains,
 			},
 		},
 		{
-			Input: `![hex:41, hex:42, hex:43].contains($0)`,
+			Input: `!{hex:41, hex:42, hex:43}.contains($0)`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.Bytes([]byte("A")),
-					biscuit.Bytes([]byte("B")), biscuit.Bytes([]byte("C"))}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Bytes([]byte("A")),
+					biscuit.Bytes([]byte("B")), biscuit.Bytes([]byte("C")))},
 				biscuit.Value{Term: biscuit.Variable("0")},
 				biscuit.BinaryContains,
 				biscuit.UnaryNegate,
 			},
 		},
 		{
-			Input: `[hex:41].union([hex:42]).intersection([hex:41]).length() == $0`,
+			Input: `{hex:41}.union({hex:42}).intersection({hex:41}).length() === $0`,
 			Expected: &biscuit.Expression{
-				biscuit.Value{Term: biscuit.Set{biscuit.Bytes([]byte("A"))}},
-				biscuit.Value{Term: biscuit.Set{biscuit.Bytes([]byte("B"))}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Bytes([]byte("A")))},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Bytes([]byte("B")))},
 				biscuit.BinaryUnion,
-				biscuit.Value{Term: biscuit.Set{biscuit.Bytes([]byte("A"))}},
+				biscuit.Value{Term: biscuit.NewSet(biscuit.Bytes([]byte("A")))},
 				biscuit.BinaryIntersection,
 				biscuit.UnaryLength,
 				biscuit.Value{Term: biscuit.Variable("0")},
@@ -304,7 +313,7 @@ func TestGrammarExpression(t *testing.T) {
 			},
 		},
 		{
-			Input: `hex:12ab == hex:ab`,
+			Input: `hex:12ab === hex:ab`,
 			Expected: &biscuit.Expression{
 				biscuit.Value{Term: biscuit.Bytes([]byte{0x12, 0xab})},
 				biscuit.Value{Term: biscuit.Bytes([]byte{0xab})},
@@ -312,7 +321,7 @@ func TestGrammarExpression(t *testing.T) {
 			},
 		},
 		{
-			Input: `{param1} + {param2} * {param3} == {param4} || {param5}`,
+			Input: `{param1} + {param2} * {param3} === {param4} || {param5}`,
 			Params: map[string]biscuit.Term{
 				"param1": biscuit.Integer(1),
 				"param2": biscuit.Integer(2),
@@ -358,26 +367,28 @@ func TestGrammarCheck(t *testing.T) {
 		{
 			Input: `check if parent("a", "b"), parent("b", "c")`,
 			Expected: &Check{
-				Queries: []*CheckQuery{
-					{
-						Body: []*RuleElement{
-							{
-								Predicate: &Predicate{
+				CheckIf: &CheckIf{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
 
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("a")},
-										{String: sptr("b")},
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("a")},
+											{String: sptr("b")},
+										},
 									},
 								},
-							},
-							{
-								Predicate: &Predicate{
+								{
+									Predicate: &Predicate{
 
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("b")},
-										{String: sptr("c")},
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("b")},
+											{String: sptr("c")},
+										},
 									},
 								},
 							},
@@ -387,106 +398,23 @@ func TestGrammarCheck(t *testing.T) {
 			},
 		},
 		{
-			Input: `check if parent("a", "b"), parent("b", "c")`,
+			Input: `check if true trusting previous, ed25519/abc123`,
 			Expected: &Check{
-				Queries: []*CheckQuery{
-					{
-						Body: []*RuleElement{
-							{
-								Predicate: &Predicate{
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("a")},
-										{String: sptr("b")},
-									},
-								},
-							},
-							{
-								Predicate: &Predicate{
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("b")},
-										{String: sptr("c")},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Input: `check if parent("a", "b"), parent("b", "c") or parent("a", "b"), parent("b", "c"), $0 > 42, $1.starts_with("test")`,
-			Expected: &Check{
-				Queries: []*CheckQuery{
-					{
-						Body: []*RuleElement{
-							{
-								Predicate: &Predicate{
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("a")},
-										{String: sptr("b")},
-									},
-								},
-							},
-							{
-								Predicate: &Predicate{
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("b")},
-										{String: sptr("c")},
-									},
-								},
-							},
-						},
-					},
-					{
-						Body: []*RuleElement{
-							{
-								Predicate: &Predicate{
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("a")},
-										{String: sptr("b")},
-									},
-								},
-							},
-							{
-								Predicate: &Predicate{
-									Name: sptr("parent"),
-									IDs: []*Term{
-										{String: sptr("b")},
-										{String: sptr("c")},
-									},
-								},
-							},
-							{
-								Expression: &Expression{
-									Left: &Expr1{
-										Left: &Expr2{
-											Left: &Expr3{
-												Left: &Expr4{
-													Left: &Expr5{
-														Expr6: &Expr6{
-															Left: &ExprTerm{
-																Term: &Term{
-																	Variable: varptr("0"),
-																},
-															},
-														},
-													},
-												},
-											},
-											Right: &OpExpr3{
-												Operator: OpGreaterThan,
-												Expr3: &Expr3{
+				CheckIf: &CheckIf{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Expression: &Expression{
+										Left: &Expr1{
+											Left: &Expr2{
+												Left: &Expr3{
 													Left: &Expr4{
 														Left: &Expr5{
 															Expr6: &Expr6{
 																Left: &ExprTerm{
 																	Term: &Term{
-																		Integer: i64ptr(42),
+																		Bool: boolptr(true),
 																	},
 																},
 															},
@@ -498,32 +426,241 @@ func TestGrammarCheck(t *testing.T) {
 									},
 								},
 							},
+						},
+					},
+					Origin: &OriginClause{
+						Origin: []*Origin{
 							{
-								Expression: &Expression{
-									Left: &Expr1{
-										Left: &Expr2{
-											Left: &Expr3{
-												Left: &Expr4{
-													Left: &Expr5{
-														Expr6: &Expr6{
-															Left: &ExprTerm{
-																Term: &Term{
-																	Variable: varptr("1"),
+								Previous: sptr("previous"),
+							},
+							{
+								PublicKey: &PublicKey{
+									Algorithm: "ed25519",
+									HexBytes:  "abc123",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Input: `check all operation("read")`,
+			Expected: &Check{
+				CheckAll: &CheckAll{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("operation"),
+										IDs: []*Term{
+											{String: sptr("read")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Input: `check all operation("read") or operation("write")`,
+			Expected: &Check{
+				CheckAll: &CheckAll{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("operation"),
+										IDs: []*Term{
+											{String: sptr("read")},
+										},
+									},
+								},
+							},
+						},
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("operation"),
+										IDs: []*Term{
+											{String: sptr("write")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Input: `reject if forbidden("delete")`,
+			Expected: &Check{
+				RejectIf: &RejectIf{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("forbidden"),
+										IDs: []*Term{
+											{String: sptr("delete")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Input: `check if parent("a", "b"), parent("b", "c")`,
+			Expected: &Check{
+				CheckIf: &CheckIf{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("a")},
+											{String: sptr("b")},
+										},
+									},
+								},
+								{
+									Predicate: &Predicate{
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("b")},
+											{String: sptr("c")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Input: `check if parent("a", "b"), parent("b", "c") or parent("a", "b"), parent("b", "c"), $0 > 42, $1.starts_with("test")`,
+			Expected: &Check{
+				CheckIf: &CheckIf{
+					Queries: []*CheckQuery{
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("a")},
+											{String: sptr("b")},
+										},
+									},
+								},
+								{
+									Predicate: &Predicate{
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("b")},
+											{String: sptr("c")},
+										},
+									},
+								},
+							},
+						},
+						{
+							Body: []*RuleElement{
+								{
+									Predicate: &Predicate{
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("a")},
+											{String: sptr("b")},
+										},
+									},
+								},
+								{
+									Predicate: &Predicate{
+										Name: sptr("parent"),
+										IDs: []*Term{
+											{String: sptr("b")},
+											{String: sptr("c")},
+										},
+									},
+								},
+								{
+									Expression: &Expression{
+										Left: &Expr1{
+											Left: &Expr2{
+												Left: &Expr3{
+													Left: &Expr4{
+														Left: &Expr5{
+															Expr6: &Expr6{
+																Left: &ExprTerm{
+																	Term: &Term{
+																		Variable: varptr("0"),
+																	},
 																},
 															},
-															Right: []*OpExpr7{
-																{
-																	Operator: OpPrefix,
-																	Expression: &Expression{
-																		Left: &Expr1{
-																			Left: &Expr2{
-																				Left: &Expr3{
-																					Left: &Expr4{
-																						Left: &Expr5{
-																							Expr6: &Expr6{
-																								Left: &ExprTerm{
-																									Term: &Term{
-																										String: sptr("test"),
+														},
+													},
+												},
+												Right: &OpExpr3{
+													Operator: OpGreaterThan,
+													Expr3: &Expr3{
+														Left: &Expr4{
+															Left: &Expr5{
+																Expr6: &Expr6{
+																	Left: &ExprTerm{
+																		Term: &Term{
+																			Integer: i64ptr(42),
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								{
+									Expression: &Expression{
+										Left: &Expr1{
+											Left: &Expr2{
+												Left: &Expr3{
+													Left: &Expr4{
+														Left: &Expr5{
+															Expr6: &Expr6{
+																Left: &ExprTerm{
+																	Term: &Term{
+																		Variable: varptr("1"),
+																	},
+																},
+																Right: []*OpExpr7{
+																	{
+																		Operator: OpPrefix,
+																		Expression: &Expression{
+																			Left: &Expr1{
+																				Left: &Expr2{
+																					Left: &Expr3{
+																						Left: &Expr4{
+																							Left: &Expr5{
+																								Expr6: &Expr6{
+																									Left: &ExprTerm{
+																										Term: &Term{
+																											String: sptr("test"),
+																										},
 																									},
 																								},
 																							},
@@ -545,7 +682,8 @@ func TestGrammarCheck(t *testing.T) {
 							},
 						},
 					},
-				}},
+				},
+			},
 		},
 	}
 
@@ -602,14 +740,16 @@ func TestGrammarBlock(t *testing.T) {
 					},
 					{
 						Check: &Check{
-							Queries: []*CheckQuery{
-								{
-									Body: []*RuleElement{
-										{
-											Predicate: &Predicate{
-												Name: sptr("fact"),
-												IDs: []*Term{
-													{Bool: boolptr(true)},
+							CheckIf: &CheckIf{
+								Queries: []*CheckQuery{
+									{
+										Body: []*RuleElement{
+											{
+												Predicate: &Predicate{
+													Name: sptr("fact"),
+													IDs: []*Term{
+														{Bool: boolptr(true)},
+													},
 												},
 											},
 										},
@@ -682,14 +822,16 @@ func TestGrammarAuthorizer(t *testing.T) {
 					{
 						BlockElement: &BlockElement{
 							Check: &Check{
-								Queries: []*CheckQuery{
-									{
-										Body: []*RuleElement{
-											{
-												Predicate: &Predicate{
-													Name: sptr("fact"),
-													IDs: []*Term{
-														{Bool: boolptr(true)},
+								CheckIf: &CheckIf{
+									Queries: []*CheckQuery{
+										{
+											Body: []*RuleElement{
+												{
+													Predicate: &Predicate{
+														Name: sptr("fact"),
+														IDs: []*Term{
+															{Bool: boolptr(true)},
+														},
 													},
 												},
 											},
